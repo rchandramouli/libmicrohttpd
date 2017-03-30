@@ -294,9 +294,15 @@ MHD_create_post_processor (struct MHD_Connection *connection,
   if (NULL == encoding)
     return NULL;
   boundary = NULL;
-  if (! MHD_str_equal_caseless_n_ (MHD_HTTP_POST_ENCODING_FORM_URLENCODED,
-                                   encoding,
-                                   strlen (MHD_HTTP_POST_ENCODING_FORM_URLENCODED)))
+  if (MHD_str_equal_caseless_n_ (MHD_HTTP_POST_ENCODING_JSON,
+                                 encoding,
+                                 strlen (MHD_HTTP_POST_ENCODING_JSON)))
+    {
+      blen = 0;
+    }
+  else if (! MHD_str_equal_caseless_n_ (MHD_HTTP_POST_ENCODING_FORM_URLENCODED,
+                                        encoding,
+                                        strlen (MHD_HTTP_POST_ENCODING_FORM_URLENCODED)))
     {
       if (! MHD_str_equal_caseless_n_ (MHD_HTTP_POST_ENCODING_MULTIPART_FORMDATA,
                                        encoding,
@@ -340,6 +346,23 @@ MHD_create_post_processor (struct MHD_Connection *connection,
   return ret;
 }
 
+/**
+ * Process json POST data.
+ */
+static int
+post_process_json (struct MHD_PostProcessor *pp,
+		   const char *post_data,
+		   size_t post_data_len)
+{
+  if (MHD_NO == pp->ikvi(pp->cls, MHD_POSTDATA_KIND, (const char *)&pp[1],
+                         NULL, NULL, NULL, post_data, 0, post_data_len))
+    {
+      pp->state = PP_Error;
+      return MHD_NO;
+    }
+  pp->state = PP_Done;
+  return MHD_YES;
+}
 
 /**
  * Process url-encoded POST data.
@@ -1231,6 +1254,11 @@ MHD_post_process (struct MHD_PostProcessor *pp,
     return post_process_multipart (pp,
                                    post_data,
                                    post_data_len);
+  if (MHD_str_equal_caseless_n_ (MHD_HTTP_POST_ENCODING_JSON,
+                                 pp->encoding,
+                                 strlen(MHD_HTTP_POST_ENCODING_JSON)))
+    return post_process_json (pp, post_data, post_data_len);
+
   /* this should never be reached */
   return MHD_NO;
 }

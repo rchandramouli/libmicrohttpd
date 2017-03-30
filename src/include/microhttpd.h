@@ -834,6 +834,7 @@ MHD_get_reason_phrase_for (unsigned int code);
  */
 #define MHD_HTTP_POST_ENCODING_FORM_URLENCODED "application/x-www-form-urlencoded"
 #define MHD_HTTP_POST_ENCODING_MULTIPART_FORMDATA "multipart/form-data"
+#define MHD_HTTP_POST_ENCODING_JSON "application/json"
 
 /** @} */ /* end of group postenc */
 
